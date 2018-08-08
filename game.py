@@ -11,16 +11,16 @@ class GAME(object):
         self.CLOCK = pygame.time.Clock()
         pygame.display.set_caption("")
 
-        self.background = Background(0, GROUND, "test_background.png")
+        self.background = Background(0, GROUND, "images/test_background.png")
         self.character = Character(500, GROUND)
-        self.inventory = Inventory(0, 0, "Inventory.png")
+        self.inventory = Inventory(0, 0, "images/Inventory.png")
 
-        self.sheep = Item(720, GROUND, "Untitled.png", "sheep")
-        self.sheep_heart = Item(720, GROUND, "sheep_heart.png", "sheep heart")
-        self.knife = Item(500, 700, "Knife.png", "knife")
-        self.tree = Item(200, GROUND, "tree.png", "tree")
-        self.nest = Item(0, GROUND + 1200, "Nest.png", "nest")
-        self.feather = Item(20, GROUND + 1220, "Feather.png", "feather")
+        self.sheep = Item(720, GROUND, "images/Untitled.png", "sheep")
+        self.sheep_heart = Item(720, GROUND, "images/sheep_heart.png", "sheep heart")
+        self.knife = Item(500, 700, "images/Knife.png", "knife")
+        self.tree = Item(200, GROUND, "images/tree.png", "tree")
+        self.nest = Item(0, GROUND + 1200, "images/Nest.png", "nest")
+        self.feather = Item(20, GROUND + 1220, "images/Feather.png", "feather")
 
         self.sprites_back = pygame.sprite.Group(self.sheep)
         self.sprites_mid = pygame.sprite.Group(self.tree)
@@ -60,7 +60,7 @@ class GAME(object):
         self.sprites_character.draw(self.surface)
         self.sprites_front.draw(self.surface)
         for x in range(-GROUND, W+GROUND, GROUND):
-            self.surface.blit(pygame.image.load("Tile.png"), ((self.background.x % 200) + x,
+            self.surface.blit(pygame.image.load("images/Tile.png"), ((self.background.x % 200) + x,
                                                               self.background.rect.bottom - 50))
 
         self.inventory_sprite.draw(self.surface)
@@ -116,7 +116,7 @@ class GAME(object):
         else:
             self.character.could_climb = False
             self.character.climbing = False
-            self.character.image = pygame.image.load("bear_right/1.png").convert_alpha()
+            self.character.image = self.character.image_right
 
     def loops(self):
         # Outer game loop, includes paused game and inventory

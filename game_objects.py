@@ -69,10 +69,10 @@ class Character(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         # Loading function
-        self.image = pygame.image.load("bear_right/1.png").convert_alpha()
-        self.image_right = pygame.image.load("bear_right.png").convert_alpha()
-        self.image_left = pygame.image.load("bear.png").convert_alpha()
-        self.image_climb = pygame.image.load("bear_climb.png").convert_alpha()
+        self.image = pygame.image.load("images/bear_right/1.png").convert_alpha()
+        self.image_right = pygame.image.load("images/bear_right.png").convert_alpha()
+        self.image_left = pygame.image.load("images/bear.png").convert_alpha()
+        self.image_climb = pygame.image.load("images/bear_climb.png").convert_alpha()
         self.mask = pygame.mask.from_surface(self.image)
         self.y = H - y - self.image.get_rect().height
         self.rect = self.image.get_rect(x=self.x, y=self.y)
@@ -94,9 +94,9 @@ class Character(pygame.sprite.Sprite):
         self.climb = list()
 
         for x in range(1, 4):
-            self.right.append(pygame.image.load("bear_right/"+str(x)+".png").convert_alpha())
-            self.left.append(pygame.image.load("bear_left/"+str(x)+".png").convert_alpha())
-            self.climb.append(pygame.image.load("bear_climb/"+str(x)+".png").convert_alpha())
+            self.right.append(pygame.image.load("images/bear_right/"+str(x)+".png").convert_alpha())
+            self.left.append(pygame.image.load("images/bear_left/"+str(x)+".png").convert_alpha())
+            self.climb.append(pygame.image.load("images/bear_climb/"+str(x)+".png").convert_alpha())
 
     def move_left(self):
         if self.x >= SPEED:
@@ -111,7 +111,7 @@ class Character(pygame.sprite.Sprite):
     def climb_up(self):
         self.climbing = True
         self.y -= SPEED
-        self.image = pygame.image.load("bear_climb.png").convert_alpha()
+        self.image = pygame.image.load("images/bear_climb.png").convert_alpha()
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
     def climb_down(self, on_ground):
