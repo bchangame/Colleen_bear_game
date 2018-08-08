@@ -17,14 +17,17 @@ class GAME(object):
 
         self.sheep = Item(720, GROUND, "images/sheep.png", "sheep")
         self.sheep_heart = Item(720, GROUND, "images/sheep_heart.png", "sheep heart")
-        self.knife = Item(500, 700, "images/knife.png", "knife")
-        self.tree = Item(200, GROUND, "images/tree.png", "tree")
+        self.knife = Item(500, GROUND, "images/knife.png", "knife")
+        self.knife1 = Item(200, GROUND, "images/knife.png", "knife")
+        self.knife2 = Item(700, GROUND, "images/knife.png", "knife")
+        self.knife3 = Item(800, GROUND, "images/knife.png", "knife")
+        self.tree = Item(100, GROUND, "images/tree.png", "tree")
         self.nest = Item(0, GROUND + 1200, "images/nest.png", "nest")
         self.feather = Item(20, GROUND + 1220, "images/feather.png", "feather")
 
         self.sprites_back = pygame.sprite.Group(self.sheep)
         self.sprites_mid = pygame.sprite.Group(self.tree)
-        self.sprites_front = pygame.sprite.Group(self.knife)
+        self.sprites_front = pygame.sprite.Group(self.knife, self.knife1, self.knife2, self.knife3)
         self.sprites_character = pygame.sprite.Group(self.character)
 
         self.sprites_scroll = pygame.sprite.Group(self.background, self.tree, self.knife, self.nest, self.feather,
@@ -73,8 +76,14 @@ class GAME(object):
             # display item in open square
             # display a transparent box with number of items in it
             print("%s: %d" % (item.name, self.inventory.dictionary[item]))
-            item.inventory_sprite.rect.y = 100
-            item.inventory_sprite.rect.x = 850 + (150 * self.inventory.i)
+            print(self.inventory.i)
+            if self.inventory.i <= 3:
+                item.inventory_sprite.rect.y = 200
+            else:
+                print("more items")
+                item.inventory_sprite.rect.y = 350
+
+            item.inventory_sprite.rect.x = 900 + (150 * (self.inventory.i % 4))
             self.inventory_sprite.add(item.inventory_sprite)
             self.inventory.matrix.append((item, 100, 900 + (200 * self.inventory.i)))
             self.inventory.i += 1
@@ -164,6 +173,18 @@ class GAME(object):
                             self.get_item(self.sheep_heart)
                             self.sheep_heart.kill()
 
+                        if self.knife1.rect.collidepoint(pos) and self.knife1.alive() and self.character.rect.colliderect \
+                                    (self.knife1.rect):
+                            self.get_item(self.knife1)
+                            self.knife1.kill()
+                        if self.knife2.rect.collidepoint(pos) and self.knife2.alive() and self.character.rect.colliderect \
+                                    (self.knife2.rect):
+                            self.get_item(self.knife2)
+                            self.knife2.kill()
+                        if self.knife3.rect.collidepoint(pos) and self.knife3.alive() and self.character.rect.colliderect \
+                                    (self.knife3.rect):
+                            self.get_item(self.knife3)
+                            self.knife3.kill()
                         if self.knife.rect.collidepoint(pos) and self.knife.alive() and self.character.rect.colliderect \
                                 (self.knife.rect):
                             self.get_item(self.knife)
