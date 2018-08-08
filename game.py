@@ -11,16 +11,16 @@ class GAME(object):
         self.CLOCK = pygame.time.Clock()
         pygame.display.set_caption("")
 
-        self.background = Background(0, GROUND, "images/test_background.png")
+        self.background = Background(0, GROUND, "images/background.png")
         self.character = Character(500, GROUND)
-        self.inventory = Inventory(0, 0, "images/Inventory.png")
+        self.inventory = Inventory(0, 0, "images/inventory.png")
 
-        self.sheep = Item(720, GROUND, "images/Untitled.png", "sheep")
+        self.sheep = Item(720, GROUND, "images/sheep.png", "sheep")
         self.sheep_heart = Item(720, GROUND, "images/sheep_heart.png", "sheep heart")
-        self.knife = Item(500, 700, "images/Knife.png", "knife")
+        self.knife = Item(500, 700, "images/knife.png", "knife")
         self.tree = Item(200, GROUND, "images/tree.png", "tree")
-        self.nest = Item(0, GROUND + 1200, "images/Nest.png", "nest")
-        self.feather = Item(20, GROUND + 1220, "images/Feather.png", "feather")
+        self.nest = Item(0, GROUND + 1200, "images/nest.png", "nest")
+        self.feather = Item(20, GROUND + 1220, "images/feather.png", "feather")
 
         self.sprites_back = pygame.sprite.Group(self.sheep)
         self.sprites_mid = pygame.sprite.Group(self.tree)
@@ -60,7 +60,7 @@ class GAME(object):
         self.sprites_character.draw(self.surface)
         self.sprites_front.draw(self.surface)
         for x in range(-GROUND, W+GROUND, GROUND):
-            self.surface.blit(pygame.image.load("images/Tile.png"), ((self.background.x % 200) + x,
+            self.surface.blit(pygame.image.load("images/tile.png"), ((self.background.x % 200) + x,
                                                               self.background.rect.bottom - 50))
 
         self.inventory_sprite.draw(self.surface)
