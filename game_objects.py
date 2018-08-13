@@ -12,6 +12,21 @@ class Ground(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
 
+class InfiniteBackground(pygame.sprite.Sprite):
+    def __init__(self, x, y, image):
+        pygame.sprite.Sprite.__init__(self)
+        self.x = x
+        self.image = pygame.image.load(image)
+        self.y = H - y - self.image.get_rect().height
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+    def scroll_right(self):
+        self.x -= SPEED
+        if self.x == -self.rect.width:
+            self.x = self.rect.width
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+
 class Background(pygame.sprite.Sprite):
     def __init__(self, x, y, image):
         pygame.sprite.Sprite.__init__(self)
@@ -26,6 +41,11 @@ class Background(pygame.sprite.Sprite):
         self.at_edge_top = False
         self.at_edge_bottom = True
         self.v = 0
+
+    def place(self, x, y):
+        self.x = x
+        self.y = H - y - self.rect.height
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
 
     def scroll_down(self, climbing):
         if climbing:
@@ -61,18 +81,19 @@ class Background(pygame.sprite.Sprite):
         self.at_edge_right = False
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
-# more classes
-
 
 class Character(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
         # Loading function
-        self.image = pygame.image.load("images/bear_right/1.png").convert_alpha()
         self.image_right = pygame.image.load("images/bear_right.png").convert_alpha()
         self.image_left = pygame.image.load("images/bear.png").convert_alpha()
+        self.image_crouch_left = pygame.image.load("images/bear_crouch_left.png").convert_alpha()
+        self.image_crouch_right = pygame.image.load("images/bear_crouch_right.png").convert_alpha()
         self.image_climb = pygame.image.load("images/bear_climb.png").convert_alpha()
+
+        self.image = self.image_right
         self.mask = pygame.mask.from_surface(self.image)
         self.y = H - y - self.image.get_rect().height
         self.rect = self.image.get_rect(x=self.x, y=self.y)
@@ -84,6 +105,8 @@ class Character(pygame.sprite.Sprite):
         self.falling = False
         self.animate = False
         self.could_climb = False
+        self.crouching_right = False
+        self.crouching_left = False
 
         self.v = 0
 
@@ -99,11 +122,15 @@ class Character(pygame.sprite.Sprite):
             self.climb.append(pygame.image.load("images/bear_climb/"+str(x)+".png").convert_alpha())
 
     def move_left(self):
+        self.crouching_right = False
+        self.crouching_left = False
         if self.x >= SPEED:
             self.x -= SPEED
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
     def move_right(self):
+        self.crouching_right = False
+        self.crouching_left = False
         if self.x <= (W - self.rect.width):
             self.x += SPEED
         self.rect = self.image.get_rect(x=self.x, y=self.y)
@@ -118,22 +145,46 @@ class Character(pygame.sprite.Sprite):
         self.v = 0
         if not on_ground:
             self.y += SPEED
-            #self.image = self.image_climb
         else:
             self.climbing = False
             self.y = H - GROUND - self.rect.height
             self.image = self.image_right
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
-    def update(self, ground):
-        #print("falling " + str(self.falling))
-        #print("climbing " + str(self.climbing))
-        #print("jumping " + str(self.jumping))
-        #print("Right " + str(self.walking_right))
-        #print("Left " + str(self.walking_left))
-        #print("ground " + str(ground))
-        #print("velocity " + str(self.v))
+    def crouch(self):
+        self.animate = False
+        self.y = H - GROUND - self.image_crouch_left.get_rect().height
+        if self.walking_left:
+            self.image = self.image_crouch_left
+            self.walking_left = False
+            self.crouching_left = True
+        else:
+            self.image = self.image_crouch_right
+            self.walking_right = False
+            self.crouching_right = True
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
 
+    def stand(self):
+        if self.crouching_left:
+            self.image = self.image_left
+            self.y = H - GROUND - self.image.get_rect().height
+            self.crouching_left = False
+        elif self.crouching_right:
+            self.image = self.image_right
+            self.y = H - GROUND - self.image.get_rect().height
+            self.crouching_right = False
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+    def print_state(self):
+        print("falling " + str(self.falling))
+        print("climbing " + str(self.climbing))
+        print("jumping " + str(self.jumping))
+        print("Right " + str(self.walking_right))
+        print("Left " + str(self.walking_left))
+        print("ground " + str(ground))
+        print("velocity " + str(self.v))
+
+    def update(self, ground):
         # Animation
         if self.animate:
             self.count += 1
@@ -190,7 +241,6 @@ class Item(pygame.sprite.Sprite):
         else:
             self.v = 0
             self.y = self.inity
-            #self.y = H - GROUND - self.rect.height
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
     def scroll_up(self):

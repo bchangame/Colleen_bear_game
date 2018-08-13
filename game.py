@@ -15,29 +15,39 @@ class GAME(object):
         self.character = Character(500, GROUND)
         self.inventory = Inventory(0, 0, "images/inventory.png")
 
+        self.cave = Item(2060, GROUND, "images/cave.png", "cave")
+        self.cave_entry = Item(2060, GROUND, "images/cave_entry.png", "cave entry")
+        self.cave_front = Item(2060, GROUND, "images/frontcave.png", "cave front")
         self.sheep = Item(720, GROUND, "images/sheep.png", "sheep")
         self.sheep_heart = Item(720, GROUND, "images/sheep_heart.png", "sheep heart")
-        self.knife = Item(500, GROUND, "images/knife.png", "knife")
-        self.knife1 = Item(200, GROUND, "images/knife.png", "knife")
-        self.knife2 = Item(700, GROUND, "images/knife.png", "knife")
-        self.knife3 = Item(800, GROUND, "images/knife.png", "knife")
+        self.knife = Item(500, 700, "images/knife.png", "knife")
         self.tree = Item(100, GROUND, "images/tree.png", "tree")
         self.nest = Item(0, GROUND + 1200, "images/nest.png", "nest")
         self.feather = Item(20, GROUND + 1220, "images/feather.png", "feather")
+        self.knife = Item(200, GROUND, "images/knife.png", "knife")
 
-        self.sprites_back = pygame.sprite.Group(self.sheep)
-        self.sprites_mid = pygame.sprite.Group(self.tree)
-        self.sprites_front = pygame.sprite.Group(self.knife, self.knife1, self.knife2, self.knife3)
+        self.sprites_back = pygame.sprite.Group(self.sheep, self.cave_entry)
+        self.sprites_mid = pygame.sprite.Group(self.tree, self.cave)
+        self.sprites_front = pygame.sprite.Group(self.cave_front, self.knife)
         self.sprites_character = pygame.sprite.Group(self.character)
 
         self.sprites_scroll = pygame.sprite.Group(self.background, self.tree, self.knife, self.nest, self.feather,
-                                                  self.sheep, self.sheep_heart)
+                                                  self.sheep, self.sheep_heart, self.cave, self.cave_front, self.cave_entry)
+        self.sprites_gettable = pygame.sprite.Group(self.sheep_heart, self.feather, self.knife)
+
         self.inventory_sprite = pygame.sprite.OrderedUpdates()
         self.item_sprites = pygame.sprite.Group(self.sheep_heart, self.knife)
 
+        self.title_screen_scroll = 0
+        self.play_button = Item(W/2 - 170, H/2, "images/play_button.png", "play button")
+        self.title_background1 = InfiniteBackground(0, GROUND, "images/background.png")
+        self.title_background2 = InfiniteBackground(self.title_background1.rect.width, GROUND, "images/background.png")
+        self.title_screen_sprites = pygame.sprite.LayeredUpdates(self.title_background1, self.title_background2, self.play_button)
+
         self.pause = False
         self.on_surface = True
-        self.loops()
+
+        self.title_screen()
 
     def scroll(self, direction):
         if direction == "LEFT" and not self.background.at_edge_left:
@@ -110,22 +120,53 @@ class GAME(object):
 
     def set_state(self):
         # Is the character on a surface (i.e. ground)
-        if self.character.rect.bottom < self.background.rect.bottom:
-            self.on_surface = False
-            self.character.falling = True
-        else:
+        if self.character.rect.bottom == self.background.rect.bottom or \
+                (self.character.rect.bottom == (H-GROUND-640) and self.character.could_climb):
             self.on_surface = True
             self.character.falling = False
             self.character.jumping = False
+            self.character.climbing = False
+
+        else:
+            self.on_surface = False
+            self.character.falling = True
 
         # Is the character colliding with a climbable object
         if self.tree.rect.left + (self.tree.rect.width/3) < \
-                self.character.rect.centerx < self.tree.rect.right - (self.tree.rect.width/3):
+                self.character.rect.centerx < self.tree.rect.right - (self.tree.rect.width/3) or pygame.sprite.collide_mask(self.character, self.cave):
             self.character.could_climb = True
+            if self.character.climbing:
+                self.sprites_front.remove(self.cave_front)
         else:
             self.character.could_climb = False
             self.character.climbing = False
-            self.character.image = self.character.image_right
+            self.sprites_front.add(self.cave_front)
+
+    def title_screen(self):
+        while True:
+            self.surface.fill(WHITE)
+
+            for event in pygame.event.get():
+                # click on X in corner
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit(0)
+
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    if self.play_button.rect.collidepoint(pos):
+                        self.loops()
+
+            self.title_background1.scroll_right()
+            self.title_background2.scroll_right()
+
+            self.title_screen_sprites.draw(self.surface)
+
+            for x in range(-GROUND, W+GROUND, GROUND):
+                self.surface.blit(pygame.image.load("images/tile.png"), ((self.title_background1.x % 200) + x,
+                                                                         self.background.rect.bottom - 50))
+
+            pygame.display.update()
 
     def loops(self):
         # Outer game loop, includes paused game and inventory
@@ -150,8 +191,14 @@ class GAME(object):
                         if event.key == pygame.K_p:
                             self.pause = True
 
+                        if self.character.crouching_right or self.character.crouching_left and event.key == pygame.K_UP:
+                            self.character.stand()
+
+                        if not self.character.could_climb and event.key == pygame.K_DOWN:
+                            self.character.crouch()
+
                         # Jumping
-                        if event.key == pygame.K_UP and not self.character.climbing and self.on_surface:
+                        if event.key == pygame.K_SPACE and not self.character.climbing and self.on_surface:
                             self.character.jumping = True
                             self.character.falling = True
                             self.character.v = JUMP_VELOCITY
@@ -173,18 +220,6 @@ class GAME(object):
                             self.get_item(self.sheep_heart)
                             self.sheep_heart.kill()
 
-                        if self.knife1.rect.collidepoint(pos) and self.knife1.alive() and self.character.rect.colliderect \
-                                    (self.knife1.rect):
-                            self.get_item(self.knife1)
-                            self.knife1.kill()
-                        if self.knife2.rect.collidepoint(pos) and self.knife2.alive() and self.character.rect.colliderect \
-                                    (self.knife2.rect):
-                            self.get_item(self.knife2)
-                            self.knife2.kill()
-                        if self.knife3.rect.collidepoint(pos) and self.knife3.alive() and self.character.rect.colliderect \
-                                    (self.knife3.rect):
-                            self.get_item(self.knife3)
-                            self.knife3.kill()
                         if self.knife.rect.collidepoint(pos) and self.knife.alive() and self.character.rect.colliderect \
                                 (self.knife.rect):
                             self.get_item(self.knife)
