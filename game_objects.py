@@ -1,5 +1,7 @@
 import pygame
 from game_globals import *
+import random
+
 
 
 class Ground(pygame.sprite.Sprite):
@@ -27,25 +29,65 @@ class InfiniteBackground(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
 
-class Background(pygame.sprite.Sprite):
-    def __init__(self, x, y, image):
+class Item(pygame.sprite.Sprite):
+    def __init__(self, x, y, image, name):
         pygame.sprite.Sprite.__init__(self)
         self.x = x
-        self.image = pygame.image.load(image)
-        self.mask = pygame.mask.from_surface(self.image)
+        self.image = pygame.image.load(image).convert_alpha()
         self.y = H - y - self.image.get_rect().height
+        self.init_y = self.y
+        self.inventory_sprite = InventoryItem(0, 0, image)
+        self.mask = pygame.mask.from_surface(self.image)
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+        self.name = name
+        self.v = 0
+
+    def scroll_down(self, climbing):
+        if climbing:
+            self.v = SPEED
+        else:
+            self.v += GRAVITY
+        if self.y - self.v >= self.init_y:
+            self.y -= self.v
+        else:
+            self.v = 0
+            self.y = self.init_y
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
-        self.at_edge_left = True
-        self.at_edge_right = False
-        self.at_edge_top = False
-        self.at_edge_bottom = True
-        self.v = 0
+    def scroll_up(self):
+        """This makes other interactable objects scroll with the screen"""
+        self.y += SPEED
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+    def scroll_right(self):
+        """This makes other interactable objects scroll with the screen"""
+        self.x -= SPEED
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+    def scroll_left(self):
+        """This makes other interactable objects scroll with the screen"""
+        self.x += SPEED
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
 
     def place(self, x, y):
         self.x = x
         self.y = H - y - self.rect.height
         self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+    def set_pos(self, x, y):
+        self.x = x
+        self.y = y
+        self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+
+class Background(Item):
+    def __init__(self, x, y):
+        Item.__init__(self, x, y, "images/background.png", "background")
+
+        self.at_edge_left = True
+        self.at_edge_right = False
+        self.at_edge_top = False
+        self.at_edge_bottom = True
 
     def scroll_down(self, climbing):
         if climbing:
@@ -110,13 +152,14 @@ class Character(pygame.sprite.Sprite):
 
         self.v = 0
 
+        # for animation
         self.count = 0
         self.sprite_count = 0
         self.right = list()
         self.left = list()
         self.climb = list()
 
-        for x in range(1, 4):
+        for x in range(1, WALKING_FRAMES + 1):
             self.right.append(pygame.image.load("images/bear_right/"+str(x)+".png").convert_alpha())
             self.left.append(pygame.image.load("images/bear_left/"+str(x)+".png").convert_alpha())
             self.climb.append(pygame.image.load("images/bear_climb/"+str(x)+".png").convert_alpha())
@@ -188,9 +231,10 @@ class Character(pygame.sprite.Sprite):
         # Animation
         if self.animate:
             self.count += 1
-            if self.count > 1:
+            if self.count > WALKING_FRAME_RATE:
                 self.count = 0
-                self.sprite_count = (self.sprite_count + 1) % 3
+                self.sprite_count = (self.sprite_count + 1) % WALKING_FRAMES
+
             if self.walking_left:
                 self.image = self.left[self.sprite_count]
             if self.walking_right:
@@ -218,45 +262,62 @@ class Character(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(x=self.x, y=self.y)
 
 
-class Item(pygame.sprite.Sprite):
-    def __init__(self, x, y, image, name):
-        pygame.sprite.Sprite.__init__(self)
-        self.x = x
-        self.image = pygame.image.load(image).convert_alpha()
-        self.y = H - y - self.image.get_rect().height
-        self.inity = self.y
-        self.inventory_sprite = InventoryItem(0, 0, image)
-        self.mask = pygame.mask.from_surface(self.image)
-        self.rect = self.image.get_rect(x=self.x, y=self.y)
-        self.name = name
-        self.v = 0
 
-    def scroll_down(self, climbing):
-        if climbing:
-            self.v = SPEED
-        else:
-            self.v += GRAVITY
-        if self.y - self.v >= self.inity:
-            self.y -= self.v
-        else:
-            self.v = 0
-            self.y = self.inity
-        self.rect = self.image.get_rect(x=self.x, y=self.y)
+class Button(Item):
+    def __init__(self, x, y, image, hover_image):
+        Item.__init__(self, x, y, image, "button")
+        self.hover_image = pygame.image.load(hover_image).convert_alpha()
+        self.norm_image = self.image
 
-    def scroll_up(self):
-        """This makes other interactable objects scroll with the screen"""
-        self.y += SPEED
-        self.rect = self.image.get_rect(x=self.x, y=self.y)
 
-    def scroll_right(self):
-        """This makes other interactable objects scroll with the screen"""
-        self.x -= SPEED
-        self.rect = self.image.get_rect(x=self.x, y=self.y)
+class Sheep(Item):
+    def __init__(self, x, y):
+        Item.__init__(self, x, y, "images/sheep.png", "sheep")
+        self.move = 0
+        self.frame = 0
+        self.image_right = self.image
+        self.image_left = pygame.transform.flip(self.image, True, False)
 
-    def scroll_left(self):
-        """This makes other interactable objects scroll with the screen"""
-        self.x += SPEED
-        self.rect = self.image.get_rect(x=self.x, y=self.y)
+    def update(self):
+        self.frame += 1
+        if self.frame > 5:
+            self.frame = 0
+            if self.move >= 0:
+                self.move = random.randint(-1, 5)
+                if self.move >= 0:
+                    self.move = 1
+                else:
+                    self.move = -1
+
+            if self.move < 0:
+                self.move = random.randint(-5, 1)
+                if self.move > 0:
+                    self.move = 1
+                else:
+                    self.move = -1
+
+            if self.move < 0:
+                self.image = self.image_left
+            elif self.move > 0:
+                self.image = self.image_right
+
+            self.x += self.move * SPEED
+            self.rect = self.image.get_rect(x=self.x, y=self.y)
+
+
+class Knife(Item):
+    def __init__(self, x, y):
+        Item.__init__(self, x, y, "images/knife.png", "knife")
+
+
+class SheepHeart(Item):
+    def __init__(self, x, y):
+        Item.__init__(self, x, y, "images/sheep_heart.png", "sheep heart")
+
+
+class Tree(Item):
+    def __init__(self, x, y):
+        Item.__init__(self, x, y, "images/tree.png", "tree")
 
 
 class Inventory(Item):
